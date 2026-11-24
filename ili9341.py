@@ -34,33 +34,15 @@ class ILI9341Controller:
     ENABLE3G = const(0xF2)  # Enable 3 gamma control
     PUMPRC = const(0xF7)  # Pump ratio control
 
-    MIRROR_ROTATE = {  # MADCTL configurations for rotation and mirroring
-        (False, 0): 0x80,  # 1000 0000
-        (False, 90): 0xE0,  # 1110 0000
-        (False, 180): 0x40,  # 0100 0000
-        (False, 270): 0x20,  # 0010 0000
-        (True, 0): 0xC0,   # 1100 0000
-        (True, 90): 0x60,  # 0110 0000
-        (True, 180): 0x00,  # 0000 0000
-        (True, 270): 0xA0  # 1010 0000
-    }
 
-    def __init__(self, mirror=False, rotation=90, gamma=True):
-        """To configure the display orientation, use `mirror` and `rotation` here,
-        instead of `hflip` and `vmirror` at `SPIDisplay`.
-        """
-        if (mirror, rotation) not in self.MIRROR_ROTATE:
-            raise ValueError('Rotation must be 0, 90, 180 or 270.')
-        else:
-            self.madtcl = self.MIRROR_ROTATE[mirror, rotation]
+    def __init__(self, hmirror=False, vflip=False,  gamma=True):
+        """Set the display orientation using `hmirror` and `vflip` here, not with `SPIDisplay`."""
+        self.madtcl = 0x20 | (0x40 if hmirror else 0) | (0x80 if vflip else 0)
         self.gamma = gamma
-        self.rotation = rotation
 
     def init(self, spidisplay):
         """called by `SPIDisplay` during initialization"""
-        madtcl = self.madtcl
-        if spidisplay.bgr:
-            madtcl |= 0x08
+        madtcl = self.madtcl | (0x08 if spidisplay.bgr else 0)
 
         spidisplay.bus_write(self.SWRESET)
         sleep(.15)
@@ -89,7 +71,7 @@ class ILI9341Controller:
         spidisplay.bus_write(self.DISPLAY_ON)
         sleep(.05)
 
+        # Set the full address range because `write()` refreshes the entire display
         spidisplay.bus_write(self.MADCTL, madtcl)  # Memory access ctrl
-        if self.rotation in (90,270):
-            spidisplay.bus_write(SET_COLUMN, b"\x00\x00\x01\x3F")  # Column address: 0..319
-            spidisplay.bus_write(SET_PAGE, b"\x00\x00\x00\xEF")  # Row address: 0..239        
+        spidisplay.bus_write(SET_COLUMN, b"\x00\x00\x01\x3F")  # Column address: 0..319
+        spidisplay.bus_write(SET_PAGE, b"\x00\x00\x00\xEF")  # Row address: 0..239        
