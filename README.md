@@ -30,5 +30,5 @@ Connect the pins according to the [LCD Shield pinout](https://docs.openmv.io/lat
 
 If the display is connected to the backside header of an __AE3__ cam:
 - connect LED (Backlight) and Reset pins to 3.3V
-- connect DC (RS) pin to P1 (MISO) and add `miso_as_rs=True` to the `SPIDisplay` constructor, because the default RS pin is only available at the B2B header of the AE3 cam.
+- connect DC (RS) pin to P1 (MISO) and add `rs=Pin('P1')` to the `SPIDisplay` constructor, because the default RS pin is only available at the B2B header of the AE3 cam.
 
